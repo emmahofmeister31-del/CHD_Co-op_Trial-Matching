@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CHD Clinical Trial Matching Prototype</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 24px;
+      max-width: 980px;
+      margin: auto;
+      background: #fcfcfc;
+      color: #222;
+    }
+
+    h2 {
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .trial {
+      border: 1px solid #ddd;
+      background: white;
+      padding: 16px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    button {
+      padding: 10px 18px;
+      font-size: 15px;
+      cursor: pointer;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background: white;
+    }
+
+    button:hover {
+      background: #f7f7f7;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      padding: 6px;
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
+
+    .save-btn {
+      background: #fff8dc;
+      border: 1px solid #f4c430;
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
+
+    .save-btn:hover {
+      filter: brightness(0.98);
+    }
+
+    .post-actions {
+      display: inline-flex;
+      gap: 20px;
+      align-items: center;
+      margin-left: 40px;
+      margin-top: 8px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+
+    .tab-btn {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      background: #f7f7f7;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: white;
+      border-bottom: 2px solid #333;
+    }
+
+    .layout {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    .main {
+      flex: 2;
+      min-width: 0;
+    }
+
+    .side {
+      position: fixed;
+      right: -400px;
+      top: 0;
+      width: 360px;
+      height: 100%;
+      background: white;
+      border-left: 1px solid #ddd;
+      padding: 20px;
+      overflow-y: auto;
+      transition: right 0.3s ease;
+      z-index: 1000;
+      box-shadow: -6px 0 20px rgba(0,0,0,0.06);
+    }
+
+    .info-box {
+      border: 1px solid #e5e5e5;
+      background: white;
+      padding: 12px;
+      border-radius: 10px;
+      margin: 12px 0;
+    }
+
+    .help {
+      display: inline-block;
+      margin-left: 6px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border: 1px solid #bbb;
+      border-radius: 50%;
+      font-size: 12px;
+      background: #f7f7f7;
+      cursor: help;
+      position: relative;
+      vertical-align: middle;
+    }
+
+    .help::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 130%;
+      width: 260px;
+      background: #222;
+      color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.3;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 2000;
+      white-space: normal;
+    }
+
+    .help::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 115%;
+      border: 6px solid transparent;
+      border-top-color: #222;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 2000;
+    }
+
+    .help:hover::after,
+    .help:hover::before {
+      opacity: 1;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid #ddd;
+      background: #f7f7f7;
+      margin-right: 8px;
+    }
+
+    .signal-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 12px;
+    }
+
+    .signal-pill {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid #d9d9d9;
+      background: #f8f8f8;
+      color: #333;
+    }
+
+    .progress-wrap {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 6px;
+      background: #fafafa;
+    }
+
+    .progress-bar {
+      height: 12px;
+      border-radius: 8px;
+      background: #cfe8ff;
+      width: 45%;
+    }
+
+    .progress-label {
+      font-size: 12px;
+      color: #555;
+      margin-top: 6px;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .metric-value {
+      font-weight: 700;
+    }
+
+    .stagebar {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .stage {
+      flex: 1;
+      height: 12px;
+      border-radius: 8px;
+      background: #eee;
+      border: 1px solid #ddd;
+    }
+
+    .stage.on {
+      background: #cfe8ff;
+      border-color: #b6d7ff;
+    }
+
+    .stage-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #666;
+      margin-top: 6px;
+    }
+
+    .gauge-wrap {
+      margin-top: 10px;
+    }
+
+    .gauge {
+      position: relative;
+      width: 260px;
+      height: 130px;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    .gauge::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 260px 260px 0 0;
+      background: conic-gradient(from 180deg, #4caf50 0 70deg, #ffeb3b 70deg 140deg, #f44336 140deg 180deg);
+    }
+
+    .gauge::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 190px;
+      height: 95px;
+      border-radius: 190px 190px 0 0;
+      background: #fff;
+      border: 1px solid #eee;
+    }
+
+    .needle {
+      position: absolute;
+      left: 50%;
+      top: 120px;
+      width: 2px;
+      height: 95px;
+      background: #111;
+      transform-origin: bottom center;
+      transform: translateX(-50%) rotate(0deg);
+      z-index: 5;
+      border-radius: 2px;
+    }
+
+    .needle-dot {
+      position: absolute;
+      left: 50%;
+      top: 112px;
+      width: 14px;
+      height: 14px;
+      background: #111;
+      border-radius: 50%;
+      transform: translateX(-50%);
+      z-index: 6;
+    }
+
+    .gauge-caption {
+      text-align: center;
+      margin-top: 6px;
+      font-size: 12px;
+      color: #444;
+    }
+
+    .range-row {
+      margin-top: 8px;
+    }
+
+    .range-row input[type="range"] {
+      width: 100%;
+    }
+
+    .tiny {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .note {
+      background: #f8f8f8;
+      border: 1px solid #e4e4e4;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #444;
+      margin-bottom: 16px;
+    }
+
+    #resultsIntro {
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>CHD Clinical Trial Matching Prototype</h2>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabFinder" onclick="showTab('finder')">Trial Finder</button>
+    <button class="tab-btn" id="tabProfile" onclick="showTab('profile')">My Profile</button>
+  </div>
+
+  <div class="layout">
+    <div class="main">
+      <div class="note">
+        Study matches are prioritized using your preferences, profile signals from The Co-op, and publicly available study descriptions within ClinicalTrials.gov. This does not determine eligibility, but helps provide studies that may be worth bringing up with your care team based on your preferences and profile.
+      </div>
+
+      <div class="section">
+        <h3>
+          Current Care
+          <span class="help" data-tooltip="This helps prioritize studies based on your current care goals and where you may be in your care journey.">?</span>
+        </h3>
+
+        <label>
+          <input type="radio" name="carePathway" value="observational" />
+          I am mainly interested in monitoring / observational studies
+          <span class="help" data-tooltip="Observational studies collect information about health without testing a new treatment. These may include surveys, monitoring, or health registry studies.">?</span>
+        </label><br />
+
+        <label>
+          <input type="radio" name="carePathway" value="treatment" />
+          I am open to treatment studies
+          <span class="help" data-tooltip="Treatment studies test medications, procedures, devices, or therapies to learn whether they may improve health outcomes.">?</span>
+        </label><br />
+
+        <label>
+          <input type="radio" name="carePathway" value="advanced" />
+          I am being evaluated for advanced heart failure or transplant options
+          <span class="help" data-tooltip="Some studies focus on advanced care such as transplant evaluation, mechanical support, or upcoming therapies for severe heart failure.">?</span>
+        </label><br />
+
+        <label>
+          <input type="radio" name="carePathway" value="unsure" />
+          I’m not sure
+          <span class="help" data-tooltip="You can choose this if you are still exploring. The tool will keep results broader rather than narrowing too quickly.">?</span>
+        </label>
+      </div>
+
+      <div class="section">
+        <h3>Testing Preferences (optional)</h3>
+        <label><input type="checkbox" name="testing" value="blood test" /> Blood Tests</label><br />
+        <label><input type="checkbox" name="testing" value="imaging" /> Imaging (Echo, MRI, CT)</label><br />
+        <label><input type="checkbox" name="testing" value="heart rhythm" /> Heart Rhythm Monitoring</label><br />
+        <label><input type="checkbox" name="testing" value="stress test" /> Exercise / Stress Testing</label><br />
+        <label><input type="checkbox" name="testing" value="wearable" /> Wearable Devices</label><br />
+        <label><input type="checkbox" name="testing" value="non-surgical" /> Non-surgical Procedure</label><br />
+        <label><input type="checkbox" name="testing" value="surgery" /> Surgical Procedure</label><br />
+        <label><input type="checkbox" name="testing" value="no procedures" /> No Procedures</label>
+      </div>
+
+      <div class="section">
+        <h3>Specific Condition (optional)</h3>
+        <input type="text" id="condition" placeholder="Example: Tetralogy of Fallot" />
+      </div>
+
+      <div class="section">
+        <h3>Age</h3>
+        <input type="number" id="age" placeholder="Enter age" />
+      </div>
+
+      <button onclick="findTrials()">Find Trials</button>
+
+
+      <hr />
+
+      <div class="section" id="postFilters" style="display:none;">
+        <h3 style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <span>Refine Results</span>
+          <span id="resultsMeta" style="font-size:12px; color:#666;"></span>
+        </h3>
+
+        <label>
+          Sort by:
+          <select id="sortMode">
+            <option value="match">Best match first</option>
+            <option value="location">Closest location first (prototype)</option>
+            <option value="title">Title (A–Z)</option>
+          </select>
+        </label>
+
+        <label style="margin-left:14px;">
+          <input type="checkbox" id="onlyStrong" />
+          Show stronger matches only
+        </label>
+
+        <label style="margin-left:14px;">
+          <input type="checkbox" id="onlyMyState" />
+          Only show trials in my state
+        </label>
+
+        <div class="post-actions">
+          <button onclick="applyPostFilters()">Apply</button>
+          <button onclick="rerunSearch()">Re-run search</button>
+        </div>
+      </div>
+
+      <p id="resultsIntro" class="tiny">
+        Results are prioritized using patient-entered preferences, CHD-specific signals, and medical context from The Co-op .
+      </p>
+
+      <div id="results"></div>
+    </div>
+
+    <div class="side" id="profilePanel">
+      <button style="float:right;" onclick="showTab('finder')">Close ✕</button>
+      <h3>My Profile</h3>
+      <p style="margin-top:0;">Use this as a quick reference while exploring study matches.</p>
+
+      <div class="info-box">
+        <strong>My Location (for sorting)</strong>
+        <p style="margin: 8px 0 0;">
+          <input type="text" id="myLocation" placeholder="Example: Chicago, IL" style="width:100%; padding:6px;" />
+          <span class="tiny">Used to prioritize and optionally filter studies in the same state.</span>
+        </p>
+      </div>
+
+      <div class="info-box">
+        <strong>Clinical Context Summary</strong>
+        <div class="tiny" style="margin-top:6px;">Profile-based indicators used to inform trial ranking in this prototype.</div>
+
+        <div style="margin-top:12px;">
+          <div class="metric-row">
+            <div><strong>Skin punch manufacturing progress</strong></div>
+            <div class="metric-value">Stage <span id="stageValue">0</span>/3</div>
+          </div>
+          <div class="stagebar" aria-label="Manufacturing stages">
+            <div class="stage" id="stage1"></div>
+            <div class="stage" id="stage2"></div>
+            <div class="stage" id="stage3"></div>
+          </div>
+          <div class="stage-labels"><span>Not started</span><span>Stage 1</span><span>Stage 2</span><span>Stage 3</span></div>
+          <div class="range-row">
+            <input type="range" id="stageInput" min="0" max="3" step="1" value="0" />
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <div class="metric-row">
+            <div><strong>The Co-op completion percentage</strong></div>
+            <div class="metric-value"><span id="coopPctLabel">65</span>%</div>
+          </div>
+          <div class="progress-wrap" style="margin-top:8px;">
+            <div class="progress-bar" id="coopBar" style="width:65%;"></div>
+            <div class="progress-label">Includes registration, surveys, and EMR sync</div>
+          </div>
+          <div class="range-row">
+            <input type="range" id="coopPct" min="0" max="100" step="1" value="65" />
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <div class="metric-row">
+            <div>
+              <strong>Cell Therapy Relevance Indicator</strong>
+              <span class="help" data-tooltip="This reflects how relevant  cell therapy studies may be based on your current profile and participation status. If you are already further along in a skin punch manufacturing trial, cell therapy studies may be ranked lower.">?</span>
+            </div>
+            <div class="metric-value">Score: <span id="cellScoreLabel">5</span>/10</div>
+          </div>
+          <div class="gauge-wrap">
+            <div class="gauge" role="img" aria-label="Cell Therapy Relevance Indicator gauge">
+              <div class="needle" id="needleCell"></div>
+              <div class="needle-dot"></div>
+            </div>
+            <div class="gauge-caption">Current signal level = <span id="cellScoreCaption">5</span></div>
+          </div>
+          <div class="range-row">
+            <input type="range" id="cellScore" min="0" max="10" step="1" value="5" />
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <div class="metric-row">
+            <div><strong>Fontan Status Indicator</strong></div>
+            <div class="metric-value">Score: <span id="fontanScoreLabel">3</span>/10</div>
+          </div>
+          <div class="gauge-wrap">
+            <div class="gauge" role="img" aria-label="Fontan Status Indicator gauge">
+              <div class="needle" id="needleFontan"></div>
+              <div class="needle-dot"></div>
+            </div>
+            <div class="gauge-caption">Current signal level: <span id="fontanConcern">low</span></div>
+          </div>
+          <div class="range-row">
+            <input type="range" id="fontanScore" min="0" max="10" step="1" value="3" />
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <strong>Conditions I’ve Listed</strong>
+        <p id="myCondDisplay"><em>Not entered yet.</em></p>
+      </div>
+
+      <div class="info-box">
+        <strong>Research Participation Snapshot</strong>
+        <div style="margin-top:8px;">
+          <div>
+            <strong>Norwood Procedure Study</strong><br />
+            <span style="font-size:12px;color:#555;">Enrolled: 01/12/2025</span>
+          </div>
+          <hr />
+          <div>
+            <strong>Skin Punch Biopsy</strong><br />
+            <span style="font-size:12px;color:#555;">HeartWorks, Inc.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <strong>My Surgeries</strong>
+        <ul>
+          <li>Norwood</li>
+          <li>Glenn</li>
+        </ul>
+      </div>
+
+      <div class="info-box">
+        <strong>Medications I’ve Listed</strong>
+        <ul>
+          <li>Aspirin</li>
+          <li>Furosemide</li>
+          <li>Alprostadil</li>
+        </ul>
+      </div>
+
+      <div class="info-box">
+        <strong>Key History</strong>
+        <p style="margin:6px 0;"><strong>Cardiac transplant:</strong> Yes</p>
+        <p style="margin:6px 0;"><strong>Placed on ECMO:</strong> Yes</p>
+      </div>
+
+      <div class="info-box">
+        <strong>Genetic Testing</strong>
+        <ul>
+          <li>Single gene testing</li>
+          <li>Exome sequencing</li>
+        </ul>
+      </div>
+
+      <div class="info-box note">
+        This profile panel is intended to demonstrate how provided patient information and Co-op-derived context could support more transparent study matching within the Matrix platform.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function AppModule(){
+      console.log("AppModule initialized");
+      const MATCH_WEIGHTS = {
+        AGE_MATCH: 3,
+        AGE_MISMATCH: -4,
+        KEYWORD_HIT_CAP: 4,
+        STATE_MATCH: 2,
+        HIGH_COOP_COMPLETION: 1,
+        NO_PROCEDURE_PENALTY: -2,
+        CARE_PATHWAY_MATCH: 3,
+        CARE_PATHWAY_SOFT_MATCH: 1
+      };
+
+      const TERM_GROUPS = {
+        CELL: ["biopsy","skin punch","tissue","cell","stem","cardiac lineage","cardiomyocyte","regener"],
+        FONTAN: ["fontan","single ventricle","univentricular","glenn","hemi-fontan"],
+        HIGH_BURDEN: ["surgery","surgical","procedure","biopsy","catheter","implant","device","thoracotomy"],
+        LOWER_BURDEN: ["observational","registry","monitoring","follow-up","natural history","quality of life","survey"],
+        ADVANCED_CARE: ["transplant","heart transplantation","advanced heart failure","nyha class iii","nyha class iv","mechanical support","end-stage systolic heart failure"],
+        TREATMENT: ["interventional","treatment","drug","device","biological","vaccine","procedure","therapy"]
+      };
+
+      let savedTrials = JSON.parse(localStorage.getItem("savedTrials") || "[]");
+      let lastResults = [];
+      const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+      const escapeHtml = v => String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'", "&#39;");
+      const summarizeText = t => { if (!t) return "No summary available."; const s=String(t).split(". "); const short=s.slice(0,2).join(". "); return short.endsWith(".")?short:short+"."; };
+      const scoreToNeedleDeg = s => (clamp(parseInt(s||0,10),0,10)/10)*180;
+      const fontanSignalLabel = s => { const v=clamp(parseInt(s||0,10),0,10); if (v>=7) return "high"; if (v>=4) return "moderate"; return "low"; };
+      const getSelectedRadioValue = name => (document.querySelector(`input[name="${name}"]:checked`)||{}).value || "";
+
+      function persistSaved(){ localStorage.setItem("savedTrials", JSON.stringify(savedTrials)); }
+      function renderSavedTrials(){
+        const existing = document.getElementById("savedTrialsBox"); if (existing) existing.remove();
+        const box = document.createElement("div"); box.id = "savedTrialsBox"; box.style.marginTop = "24px";
+        if (!savedTrials.length){
+          box.innerHTML = `<hr><h3>Saved Studies</h3><p><em>No saved studies yet.</em></p>`; document.body.appendChild(box); return;
+        }
+        box.innerHTML = `<hr><h3>Saved Studies (${savedTrials.length})</h3>${savedTrials.map(t=>`
+          <div style="margin-bottom:10px;padding:10px;border:1px solid #ddd;border-radius:6px;background:white;">
+            <strong>${escapeHtml(t.title)}</strong><br>
+            <a href="https://clinicaltrials.gov/study/${encodeURIComponent(t.id)}" target="_blank" rel="noopener">View</a>
+            &nbsp;|&nbsp;<button data-remove-id="${escapeHtml(t.id)}">Remove</button>
+          </div>
+        `).join("")}`;
+        document.body.appendChild(box);
+      }
+
+      function saveTrial(id, title){
+        if (!id || id==="N/A"){ alert("This study does not have an NCT ID to save."); return; }
+        if (!savedTrials.find(s=>s.id===id)){ savedTrials.push({id,title}); persistSaved(); renderSavedTrials(); alert("Study saved."); }
+        else alert("This study is already saved.");
+      }
+      function removeSavedTrial(id){ savedTrials = savedTrials.filter(s=>s.id!==id); persistSaved(); renderSavedTrials(); }
+
+      document.addEventListener("click", e=>{
+        const rem = e.target.closest("button[data-remove-id]"); if (rem) removeSavedTrial(rem.getAttribute("data-remove-id"));
+        const save = e.target.closest("button[data-save-id]"); if (save) saveTrial(save.getAttribute("data-save-id"), save.getAttribute("data-save-title"));
+      });
+
+      function normalizeState(s){ return String(s||"").trim().toUpperCase(); }
+      function extractStateFromMyLocation(loc){ const parts = String(loc||"").split(","); return parts.length<2?"":normalizeState(parts[1]); }
+      function extractTrialStates(locs){ const set=new Set(); for(const loc of (locs||[])){ const p=String(loc).split(",").map(x=>x.trim()); if (p.length>=2) set.add(normalizeState(p[1])); } return set; }
+      function isSameState(trialLocations, myLocation){
+        const myState = extractStateFromMyLocation(myLocation); if (!myState) return false;
+        const trialStates = extractTrialStates(trialLocations); if (!trialStates.size) return false;
+        for(const ts of trialStates) if (ts===myState || ts.startsWith(myState) || myState.startsWith(ts)) return true;
+        return false;
+      }
+      function calculateLocationScore(trialLocations, myLocation){ return isSameState(trialLocations, myLocation) ? 3 : 0; }
+
+      function getAdjustedCellScore(rawCellScore, stage){
+        let adjusted = clamp(parseInt(rawCellScore||0,10),0,10);
+        if (stage === 2) adjusted = Math.min(adjusted,4);
+        if (stage === 3) adjusted = Math.min(adjusted,2);
+        return adjusted;
+      }
+
+      function renderIndicators(){
+        const stageEl = document.getElementById("stageInput");
+        const coopEl = document.getElementById("coopPct");
+        const cellEl = document.getElementById("cellScore");
+        const fontanEl = document.getElementById("fontanScore");
+        const stage = clamp(parseInt(stageEl?.value||0,10),0,3);
+        const stageValueEl = document.getElementById("stageValue");
+        if (stageValueEl) stageValueEl.textContent = String(stage);
+        const s1 = document.getElementById("stage1"), s2 = document.getElementById("stage2"), s3 = document.getElementById("stage3");
+        if (s1) s1.classList.toggle("on", stage>=1);
+        if (s2) s2.classList.toggle("on", stage>=2);
+        if (s3) s3.classList.toggle("on", stage>=3);
+        const coopCompletion = clamp(parseInt(coopEl?.value||0,10),0,100);
+        const coopLabel = document.getElementById("coopPctLabel"), coopBar = document.getElementById("coopBar");
+        if (coopLabel) coopLabel.textContent = String(coopCompletion);
+        if (coopBar) coopBar.style.width = coopCompletion + "%";
+        const rawCellScore = clamp(parseInt(cellEl?.value||0,10),0,10);
+        const adjusted = getAdjustedCellScore(rawCellScore, stage);
+        const cellLabel = document.getElementById("cellScoreLabel"), cellCaption = document.getElementById("cellScoreCaption"), needleCell = document.getElementById("needleCell");
+        if (cellLabel) cellLabel.textContent = String(adjusted);
+        if (cellCaption) cellCaption.textContent = String(adjusted);
+        if (needleCell) needleCell.style.transform = `translateX(-50%) rotate(${scoreToNeedleDeg(adjusted)}deg)`;
+        const fontanScore = clamp(parseInt(fontanEl?.value||0,10),0,10);
+        const fontanLabel = document.getElementById("fontanScoreLabel"), fontanConcernEl = document.getElementById("fontanConcern"), needleFontan = document.getElementById("needleFontan");
+        if (fontanLabel) fontanLabel.textContent = String(fontanScore);
+        if (fontanConcernEl) fontanConcernEl.textContent = fontanSignalLabel(fontanScore);
+        if (needleFontan) needleFontan.style.transform = `translateX(-50%) rotate(${scoreToNeedleDeg(fontanScore)}deg)`;
+      }
+      ["stageInput","coopPct","cellScore","fontanScore"].forEach(id=>{ const el=document.getElementById(id); if (el) el.addEventListener("input", renderIndicators); });
+
+      function getIndicatorInputs(){
+        const stage = clamp(parseInt(document.getElementById("stageInput")?.value||0,10),0,3);
+        const rawCellScore = clamp(parseInt(document.getElementById("cellScore")?.value||0,10),0,10);
+        return { stage, coopPct: clamp(parseInt(document.getElementById("coopPct")?.value||0,10),0,100), cellScore: getAdjustedCellScore(rawCellScore, stage), fontanScore: clamp(parseInt(document.getElementById("fontanScore")?.value||0,10),0,10) };
+      }
+
+      function syncProfilePanel(){
+        const cond = document.getElementById("condition")?.value?.trim() || "";
+        const display = document.getElementById("myCondDisplay");
+        if (display) display.innerHTML = cond ? escapeHtml(cond) : "<em>Not entered yet.</em>";
+      }
+      document.addEventListener("input", e => { if (e.target && e.target.id === "condition") syncProfilePanel(); });
+
+      function buildMatchSignals(trial, inputs, locationScore, flags, ageFits){
+        const signals = [];
+        if (ageFits) signals.push("Age Match");
+        if (locationScore === 3) signals.push("In-State");
+        if (inputs.carePathway === "observational" && (trial.type === "OBSERVATIONAL" || flags.isLowerBurden)) signals.push("Monitoring-Focused");
+        if (inputs.carePathway === "treatment" && (trial.type === "INTERVENTIONAL" || flags.isTreatmentRelated)) signals.push("Treatment-Focused");
+        if (inputs.carePathway === "advanced" && flags.isAdvancedCareRelated) signals.push("Advanced Care Related");
+        if (flags.isFontanRelated) signals.push("Fontan-Related");
+        if (flags.isCellRelated) signals.push("Cell Therapy Related");
+        if (flags.isHighBurden) signals.push("Procedure Heavy");
+        return signals.slice(0,6);
+      }
+
+      function computeMatch(trial, inputs){
+        if (!trial) { console.warn("computeMatch called with falsy trial:", trial); return { score:0, tier:"GENERAL", reasons:[], cautions:[], matchedTerms:[], locScore:0, signals:[] }; }
+        console.log("computeMatch:", trial.id || "(no id)", { inputs });
+        const reasons = [], cautions = [], matchedTerms = [];
+        let score = 0;
+        const searchable = ((trial.title || "") + " " + (trial.summary || "")).toLowerCase();
+        let ageFits = null;
+        if (inputs?.age){
+          const numericAge = parseInt(inputs.age,10);
+          const min = parseInt(trial.minAge,10), max = parseInt(trial.maxAge,10);
+          ageFits = true;
+          if (!isNaN(min) && numericAge < min) ageFits = false;
+          if (!isNaN(max) && numericAge > max) ageFits = false;
+          if (ageFits){ score += MATCH_WEIGHTS.AGE_MATCH; reasons.push("Age appears within the listed eligibility range"); }
+          else { score += MATCH_WEIGHTS.AGE_MISMATCH; cautions.push("Age may fall outside the listed eligibility range"); }
+        }
+        const keywordNeedles = [];
+        if (inputs?.conditionInput) keywordNeedles.push({label: inputs.conditionInput, value: inputs.conditionInput.toLowerCase()});
+        const testingSelections = Array.isArray(inputs?.testingSelections) ? inputs.testingSelections : [];
+        for (const pref of testingSelections) keywordNeedles.push({label: pref, value: String(pref).toLowerCase()});
+        let keywordHits = 0;
+        for (const needle of keywordNeedles){
+          if (needle.value && needle.value.length >= 3 && searchable.includes(needle.value)){ keywordHits++; matchedTerms.push(needle.label); }
+        }
+        if (keywordHits){ score += Math.min(MATCH_WEIGHTS.KEYWORD_HIT_CAP, keywordHits); reasons.push(`Matches your preferences: ${matchedTerms.slice(0,5).join(", ")}${matchedTerms.length>5 ? "…" : ""}`); }
+        const locationScore = calculateLocationScore(trial.locations, inputs?.myLocation || "");
+        if (locationScore === 3){ score += MATCH_WEIGHTS.STATE_MATCH; reasons.push("Trial appears in your state"); }
+        const indicators = inputs?.indicators || { stage:0, coopPct:0, cellScore:0, fontanScore:0 };
+        if ((indicators.coopPct || 0) >= 70){ score += MATCH_WEIGHTS.HIGH_COOP_COMPLETION; reasons.push("Higher Co-op completion supports more tailored ranking"); }
+        else if ((indicators.coopPct || 0) <= 30){ reasons.push("Lower Co-op completion keeps matches broader"); }
+        const flags = {
+          isCellRelated: TERM_GROUPS.CELL.some(t => searchable.includes(t)),
+          isFontanRelated: TERM_GROUPS.FONTAN.some(t => searchable.includes(t)),
+          isHighBurden: TERM_GROUPS.HIGH_BURDEN.some(t => searchable.includes(t)),
+          isLowerBurden: TERM_GROUPS.LOWER_BURDEN.some(t => searchable.includes(t)),
+          isAdvancedCareRelated: TERM_GROUPS.ADVANCED_CARE.some(t => searchable.includes(t)),
+          isTreatmentRelated: TERM_GROUPS.TREATMENT.some(t => searchable.includes(t))
+        };
+        if (inputs?.carePathway === "observational"){
+          if (trial.type === "OBSERVATIONAL" || flags.isLowerBurden){ score += MATCH_WEIGHTS.CARE_PATHWAY_MATCH; reasons.push("Current care pathway aligns with observational or monitoring-focused studies"); }
+          if (flags.isHighBurden) cautions.push("This study may involve procedures beyond a monitoring-focused preference");
+        } else if (inputs?.carePathway === "treatment"){
+          if (trial.type === "INTERVENTIONAL" || flags.isTreatmentRelated){ score += MATCH_WEIGHTS.CARE_PATHWAY_MATCH; reasons.push("Current care pathway aligns with treatment-focused studies"); }
+          else { score += MATCH_WEIGHTS.CARE_PATHWAY_SOFT_MATCH; reasons.push("This study may still be relevant while keeping options broad"); }
+        } else if (inputs?.carePathway === "advanced"){
+          if (flags.isAdvancedCareRelated){ score += MATCH_WEIGHTS.CARE_PATHWAY_MATCH; reasons.push("Current care pathway aligns with advanced heart failure or transplant-related studies"); }
+          else if (flags.isTreatmentRelated){ score += MATCH_WEIGHTS.CARE_PATHWAY_SOFT_MATCH; reasons.push("Treatment-focused study may still be relevant to advanced care exploration"); }
+        } else if (inputs?.carePathway === "unsure"){
+          reasons.push("Broader matching kept because care pathway is still being explored");
+        }
+        if ((indicators.cellScore || 0) >= 6 && flags.isCellRelated){
+          if (indicators.stage === 0){ score += 2; reasons.push("Cell therapy relevance indicator increases priority for cell-related trials while internal manufacturing has not yet started"); }
+          else if (indicators.stage === 1){ score += 1; reasons.push("Early skin punch manufacturing progress still allows relevance of some cell-related trials"); }
+        }
+        if ((indicators.stage || 0) >= 2 && flags.isCellRelated){ score -= 2; cautions.push(" Skin punch manufacturing progress may reduce relevance of some external cell-related trials"); }
+        if (flags.isFontanRelated){
+          if ((indicators.fontanScore || 0) >= 7){
+            if (flags.isLowerBurden){ score += 4; reasons.push("Higher Fontan signal increases relevance of lower-burden Fontan-related studies"); }
+            if (flags.isHighBurden){ score -= 3; cautions.push("Higher Fontan signal may lower relevance of higher-burden procedural studies"); }
+            if (flags.isAdvancedCareRelated){ score += 2; reasons.push("Higher Fontan signal may increase relevance of advanced heart failure studies"); }
+          } else if ((indicators.fontanScore || 0) >= 4){
+            score += 2; reasons.push("Moderate Fontan signal increases relevance of Fontan-related studies");
+            if (flags.isHighBurden){ score -= 1; cautions.push("Moderate Fontan signal slightly lowers relevance of higher-burden procedural studies"); }
+          }
+        }
+        if ((testingSelections||[]).map(s=>String(s).toLowerCase()).includes("no procedures")){
+          if (TERM_GROUPS.HIGH_BURDEN.some(term => searchable.includes(term))){ score += MATCH_WEIGHTS.NO_PROCEDURE_PENALTY; cautions.push("Preference for no procedures lowers the relevance of procedure-heavy studies"); }
+        }
+        const signals = buildMatchSignals(trial, inputs, locationScore, flags, ageFits);
+        let tier = "GENERAL"; if (score >= 8) tier = "STRONG"; else if (score >= 4) tier = "POSSIBLE";
+        console.log("computeMatch result:", { id: trial.id, score, tier, reasons, cautions, signals });
+        return { score, tier, reasons, cautions, matchedTerms, locScore: locationScore, signals };
+      }
+
+      function badgeForTier(tier, score){
+        if (tier === "STRONG") return `<span class="badge">Strong match (${score})</span>`;
+        if (tier === "POSSIBLE") return `<span class="badge">Possible match (${score})</span>`;
+        return `<span class="badge">General match (${score})</span>`;
+      }
+      function renderSignalPills(signals){ if (!signals || !signals.length) return ""; return `<div class="signal-row">${signals.map(s=>`<span class="signal-pill">${escapeHtml(s)}</span>`).join("")}</div>`; }
+
+      function renderResultsGrouped(trials){
+        console.log("renderResultsGrouped called with", Array.isArray(trials) ? trials.length : 0, "items");
+        const resultsDiv = document.getElementById("results");
+        if (!resultsDiv){ console.warn("renderResultsGrouped: #results element not found"); return; }
+        const strong = trials.filter(t=>t.matchTier==="STRONG");
+        const possible = trials.filter(t=>t.matchTier==="POSSIBLE");
+        const general = trials.filter(t=>t.matchTier==="GENERAL");
+        const renderGroup = (title,list) => {
+          if (!list.length) return "";
+          return `<h3>${title} (${list.length})</h3>` + list.map(trial=>`
+            <div class="trial" title="${escapeHtml((trial.matchReasons||[]).join(" • "))}">
+              ${badgeForTier(trial.matchTier, trial.matchScore)}
+              <h3 style="margin-top:8px;">${escapeHtml(trial.title)}</h3>
+              ${renderSignalPills(trial.matchSignals)}
+              <p><strong>NCT ID:</strong> ${escapeHtml(trial.id)}</p>
+              <p><strong>Type:</strong> ${escapeHtml(trial.type)}</p>
+              <p><strong>Eligibility:</strong> ${escapeHtml(trial.minAge)} - ${escapeHtml(trial.maxAge)}</p>
+              <p><strong>Locations:</strong> ${escapeHtml((trial.locations||[]).join("; ") || "Not listed")}</p>
+              <p><strong>Why this match:</strong> ${escapeHtml((trial.matchReasons||[]).join("; "))}</p>
+              ${trial.cautions && trial.cautions.length ? `<p><strong>Things to review:</strong> ${escapeHtml(trial.cautions.join("; "))}</p>` : ""}
+              <p>${escapeHtml(summarizeText(trial.summary))}</p>
+              <a href="https://clinicaltrials.gov/study/${encodeURIComponent(trial.id)}" target="_blank" rel="noopener">View Full Study</a>
+              <br/><br/>
+              <button class="save-btn" data-save-id="${escapeHtml(trial.id)}" data-save-title="${escapeHtml(trial.title)}">Save Study</button>
+            </div>
+          `).join("");
+        };
+        resultsDiv.innerHTML = renderGroup("Best Matches", strong) + renderGroup("Possible Matches", possible) + renderGroup("General Matches", general);
+      }
+
+      function updateResultsMeta(trials){
+        const resultsMeta = document.getElementById("resultsMeta"); if (!resultsMeta) return;
+        const total = Array.isArray(trials) ? trials.length : 0;
+        const inState = (trials||[]).filter(t=>t.sameState===true).length;
+        resultsMeta.textContent = total ? `Showing ${total} trial${total===1?"":"s"} (${inState} in-state)` : "";
+      }
+
+      function applyPostFilters(){
+        if (!lastResults.length) return;
+        const sortMode = document.getElementById("sortMode").value;
+        const onlyStrong = document.getElementById("onlyStrong").checked;
+        const onlyMyState = document.getElementById("onlyMyState").checked;
+        let filtered = [...lastResults];
+        if (onlyStrong) filtered = filtered.filter(t=>t.matchTier==="STRONG");
+        if (onlyMyState) filtered = filtered.filter(t=>t.sameState===true);
+        if (sortMode === "match") filtered.sort((a,b)=>b.matchScore - a.matchScore);
+        else if (sortMode === "location") filtered.sort((a,b)=> b.locScore - a.locScore || b.matchScore - a.matchScore);
+        else if (sortMode === "title") filtered.sort((a,b) => a.title.localeCompare(b.title));
+        renderResultsGrouped(filtered);
+        updateResultsMeta(filtered);
+      }
+
+      function rerunSearch(){ findTrials(); }
+
+      async function findTrials(){
+        console.log("findTrials invoked");
+        const age = document.getElementById("age")?.value || "";
+        const conditionInput = document.getElementById("condition")?.value?.trim() || "";
+        const myLocation = document.getElementById("myLocation")?.value?.trim() || "";
+        const onlyMyState = document.getElementById("onlyMyState")?.checked || false;
+        const indicators = getIndicatorInputs();
+        const carePathway = (function(){ const s = document.querySelector('input[name="carePathway"]:checked'); return s ? s.value : ""; })();
+        const testingSelections = Array.from(document.querySelectorAll('input[name="testing"]:checked')).map(i=>i.value);
+
+        console.log("search inputs:", { age, conditionInput, myLocation, onlyMyState, indicators, carePathway, testingSelections });
+
+        const termParts = [];
+        if (conditionInput) termParts.push(conditionInput);
+        if (testingSelections.length) termParts.push("(" + testingSelections.join(" OR ") + ")");
+
+        const url = new URL("https://clinicaltrials.gov/api/v2/studies");
+        url.searchParams.append("query.cond", "Congenital Heart Disease");
+        if (termParts.length) url.searchParams.append("query.term", termParts.join(" AND "));
+        url.searchParams.append("filter.overallStatus", "RECRUITING");
+        url.searchParams.append("pageSize", "50");
+
+        console.log("fetching URL:", url.toString());
+
+        const resultsDiv = document.getElementById("results");
+        const resultsIntro = document.getElementById("resultsIntro");
+        if (resultsDiv) resultsDiv.innerHTML = "<p>Searching for studies...</p>";
+        if (resultsIntro) resultsIntro.style.display = "none";
+
+        try {
+          const response = await fetch(url);
+          console.log("fetch response status:", response.status);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          console.log("fetch data keys:", Object.keys(data || {}));
+          if (!data || !Array.isArray(data.studies) || !data.studies.length){
+            if (resultsDiv) resultsDiv.innerHTML = "<p>No studies were found for the current search, would you like to meet with an Admin?</p>";
+            const postFiltersEl = document.getElementById("postFilters"); if (postFiltersEl) postFiltersEl.style.display = "none";
+            lastResults = []; updateResultsMeta([]); if (resultsIntro) resultsIntro.style.display = "none"; return;
+          }
+
+          const trials = data.studies.map(study => {
+            try {
+              const protocol = study?.protocolSection || {};
+              const id = protocol?.identificationModule?.nctId || "N/A";
+              const title = protocol?.identificationModule?.briefTitle || "No title available.";
+              const summary = protocol?.descriptionModule?.briefSummary || "No summary available.";
+              const type = (protocol?.designModule?.studyType || "Unknown").toUpperCase();
+              const minAge = protocol?.eligibilityModule?.minimumAge || "N/A";
+              const maxAge = protocol?.eligibilityModule?.maximumAge || "N/A";
+              const locationEntries = protocol?.contactsLocationsModule?.locations || [];
+              const locations = Array.isArray(locationEntries) ? locationEntries.map(locationEntry => {
+                const city = locationEntry?.facility?.address?.city;
+                const state = locationEntry?.facility?.address?.state;
+                const country = locationEntry?.facility?.address?.country;
+                return [city, state, country].filter(Boolean).join(", ");
+              }) : [];
+              return { id, title, summary, type, minAge, maxAge, locations };
+            } catch (mapErr){
+              console.warn("Failed to map study:", mapErr, study);
+              return null;
+            }
+          }).filter(Boolean);
+
+          console.log("mapped trials count:", trials.length);
+
+          const filteredTrials = trials.filter(trial => {
+            if (!age) return true;
+            const numericAge = parseInt(age,10), min = parseInt(trial.minAge,10), max = parseInt(trial.maxAge,10);
+            if (!isNaN(min) && numericAge < min) return false;
+            if (!isNaN(max) && numericAge > max) return false;
+            return true;
+          });
+
+          if (!filteredTrials.length){
+            if (resultsDiv) resultsDiv.innerHTML = "<p>No studies remained after applying the current filters, would you like to meet with an Admin?</p>";
+            const postFiltersEl = document.getElementById("postFilters"); if (postFiltersEl) postFiltersEl.style.display = "none";
+            lastResults = []; updateResultsMeta([]); if (resultsIntro) resultsIntro.style.display = "none"; return;
+          }
+
+          const inputs = { age, conditionInput, testingSelections, myLocation, indicators, carePathway };
+          let scored = filteredTrials.map(trial => {
+            const match = computeMatch(trial, inputs);
+            const sameState = isSameState(trial.locations, myLocation);
+            return { ...trial, matchScore: match.score, matchTier: match.tier, matchReasons: match.reasons, cautions: match.cautions, matchedTerms: match.matchedTerms, locScore: match.locScore, matchSignals: match.signals, sameState };
+          });
+
+          if (onlyMyState) scored = scored.filter(t=>t.sameState===true);
+          if (!scored.length){
+            if (resultsDiv) resultsDiv.innerHTML = "<p>No studies matched the current criteria after filtering, would you like to meet with an Admin?</p>";
+            const postFiltersEl = document.getElementById("postFilters"); if (postFiltersEl) postFiltersEl.style.display = "block";
+            lastResults = []; updateResultsMeta([]); if (resultsIntro) resultsIntro.style.display = "none"; return;
+          }
+
+          lastResults = [...scored];
+          const postFiltersEl = document.getElementById("postFilters"); if (postFiltersEl) postFiltersEl.style.display = "block";
+          const sortEl = document.getElementById("sortMode"); if (sortEl) sortEl.value = "match";
+          const onlyStrongEl = document.getElementById("onlyStrong"); if (onlyStrongEl) onlyStrongEl.checked = false;
+          scored.sort((a,b)=> b.matchScore - a.matchScore);
+          console.log("scored results sample:", scored.slice(0,3).map(s => ({ id: s.id, score: s.matchScore })));
+          renderResultsGrouped(scored);
+          updateResultsMeta(scored);
+          if (resultsIntro) resultsIntro.style.display = "block";
+        } catch (err){
+          if (resultsDiv) resultsDiv.innerHTML = "<p>We couldn’t load study results right now. Please try again, adjust your filters, or make an appointment with Admin.</p>";
+          console.error("findTrials error:", err);
+          const postFiltersEl = document.getElementById("postFilters"); if (postFiltersEl) postFiltersEl.style.display = "none";
+          lastResults = []; updateResultsMeta([]); if (resultsIntro) resultsIntro.style.display = "none";
+        }
+      }
+
+      window.showTab = function(which){
+        const profilePanel = document.getElementById("profilePanel");
+        const tabFinder = document.getElementById("tabFinder");
+        const tabProfile = document.getElementById("tabProfile");
+        if (which === "profile"){
+          if (profilePanel) profilePanel.style.right = "0";
+          if (tabProfile) tabProfile.classList.add("active");
+          if (tabFinder) tabFinder.classList.remove("active");
+          syncProfilePanel();
+        } else {
+          if (profilePanel) profilePanel.style.right = "-400px";
+          if (tabFinder) tabFinder.classList.add("active");
+          if (tabProfile) tabProfile.classList.remove("active");
+        }
+      };
+      window.saveTrial = saveTrial;
+      window.removeSavedTrial = removeSavedTrial;
+      window.findTrials = findTrials;
+      window.applyPostFilters = applyPostFilters;
+      window.rerunSearch = rerunSearch;
+
+      renderSavedTrials();
+      renderIndicators();
+    })();
+  </script>
+</body>
+</html>
